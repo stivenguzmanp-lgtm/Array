@@ -1,0 +1,206 @@
+// --------------------
+// UTILS (pequeñas ayudas)
+function esNumeroPositivo(n) {
+  return typeof n === 'number' && !isNaN(n) && n > 0;
+}
+
+function normalizarTexto(t) {
+  return String(t || '').toLowerCase().trim();
+}
+
+// --------------------
+// 1) Buscar objetos en un array (estudiantes)
+// Ejemplo de array (puedes reemplazar por el provisto en la imagen)
+const estudiantes = [
+  { cedula: '10101010', nombres: 'Juan', apellidos: 'Pérez', edad: 20 },
+  { cedula: '20202020', nombres: 'María', apellidos: 'Gómez', edad: 19 },
+  { cedula: '30303030', nombres: 'Carlos', apellidos: 'López', edad: 21 }
+];
+
+// Función que recibe cédula y devuelve el objeto o mensaje
+function buscarEstudiantePorCedula(cedula, arreglo) {
+  if (!cedula) return 'Debe proporcionar una cédula.';
+  const encontrado = arreglo.find(e => String(e.cedula) === String(cedula));
+  if (!encontrado) return `No se encontró estudiante con cédula ${cedula}.`;
+  return encontrado;
+}
+
+// Ejemplo de uso:
+// console.log(buscarEstudiantePorCedula('20202020', estudiantes));
+
+// --------------------
+// 2) Programa para agregar información sobre libros
+const biblioteca = [];
+
+// Añadir libro
+function agregarLibro(titulo, autor, anio, isbn, coleccion) {
+  const libros = coleccion || biblioteca;
+  if (!titulo || !autor) return { ok:false, msg: 'Título y autor son obligatorios.' };
+  const a = Number(anio) || null;
+  const l = { titulo: String(titulo), autor: String(autor), anio: a, isbn: String(isbn || '') };
+  libros.push(l);
+  return { ok:true, libro: l };
+}
+
+// Listar todos los libros
+function listarLibros(coleccion) {
+  const libros = coleccion || biblioteca;
+  if (libros.length === 0) return 'No hay libros registrados.';
+  return libros.map((b, i) => `${i+1}. "${b.titulo}" - ${b.autor} (${b.anio || 's/f'})`).join('\n');
+}
+
+// Buscar por título o autor (parcial, case-insensitive)
+function buscarLibro(term, coleccion) {
+  const libros = coleccion || biblioteca;
+  const t = normalizarTexto(term);
+  const encontrados = libros.filter(l => normalizarTexto(l.titulo).includes(t) || normalizarTexto(l.autor).includes(t));
+  if (encontrados.length === 0) return `No se encontraron libros para "${term}".`;
+  return encontrados;
+}
+
+// Ejemplo rápido:
+// agregarLibro('Cien años de soledad', 'Gabriel García Márquez', 1967, 'ISBN001');
+// agregarLibro('Introducción a JS', 'Ana Torres', 2020, 'JS2020');
+// console.log(listarLibros());
+// console.log(buscarLibro('gabriel'));
+
+// --------------------
+// 3) Gestión de estudiantes (agregar, listar por apellidos, buscar, actualizar, eliminar)
+let listaEstudiantes = [...estudiantes]; // empezamos con el ejemplo anterior
+
+// Agregar nuevo estudiante (valida cédula única)
+function agregarEstudiante(obj, coleccion) {
+  const arr = coleccion || listaEstudiantes;
+  if (!obj || !obj.cedula || !obj.nombres || !obj.apellidos) return { ok:false, msg: 'cedula, nombres y apellidos obligatorios' };
+  if (arr.some(e => String(e.cedula) === String(obj.cedula))) return { ok:false, msg: 'La cédula ya existe.' };
+  arr.push({ cedula: String(obj.cedula), nombres: obj.nombres, apellidos: obj.apellidos, ...obj });
+  return { ok:true };
+}
+
+// Listar estudiantes ordenados por apellidos
+function listarEstudiantesOrdenados(coleccion) {
+  const arr = (coleccion || listaEstudiantes).slice();
+  arr.sort((a,b) => {
+    const apA = normalizarTexto(a.apellidos);
+    const apB = normalizarTexto(b.apellidos);
+    if (apA < apB) return -1;
+    if (apA > apB) return 1;
+    return 0;
+  });
+  return arr;
+}
+
+// Buscar por número de identificación (cédula)
+function buscarEstudiante(cedula, coleccion) {
+  return buscarEstudiantePorCedula(cedula, coleccion || listaEstudiantes);
+}
+
+// Actualizar datos del estudiante (busca por cédula)
+function actualizarEstudiante(cedula, nuevosDatos, coleccion) {
+  const arr = coleccion || listaEstudiantes;
+  const idx = arr.findIndex(e => String(e.cedula) === String(cedula));
+  if (idx === -1) return { ok:false, msg: 'Estudiante no encontrado.' };
+  arr[idx] = { ...arr[idx], ...nuevosDatos, cedula: String(arr[idx].cedula) }; // no cambiar cédula
+  return { ok:true, estudiante: arr[idx] };
+}
+
+// Eliminar estudiante por cédula
+function eliminarEstudiante(cedula, coleccion) {
+  const arr = coleccion || listaEstudiantes;
+  const idx = arr.findIndex(e => String(e.cedula) === String(cedula));
+  if (idx === -1) return { ok:false, msg: 'No existe el estudiante.' };
+  const eliminado = arr.splice(idx,1)[0];
+  return { ok:true, eliminado };
+}
+
+// Ejemplo:
+// agregarEstudiante({cedula:'40404040', nombres:'Ana', apellidos:'Suarez'});
+// console.log(listarEstudiantesOrdenados());
+// console.log(actualizarEstudiante('40404040',{edad:22}));
+// console.log(eliminarEstudiante('40404040'));
+
+// --------------------
+// 4) Registrar venta de varios productos (cálculo subtotal, IVA y total)
+// Se usa constante IVA = 0.19
+const IVA = 0.19;
+
+// Función que recibe un array de items {precio, cantidad} y devuelve calculos y errores
+function calcularVenta(items) {
+  if (!Array.isArray(items) || items.length === 0) return { ok:false, msg:'No hay productos.' };
+  let totalesParciales = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    // Validaciones
+    if (typeof it.precio === 'undefined' || typeof it.cantidad === 'undefined') {
+      return { ok:false, msg:`Producto ${i+1}: falta precio o cantidad.` };
+    }
+    const precio = Number(it.precio);
+    const cant = Number(it.cantidad);
+    if (!esNumeroPositivo(precio) || !Number.isFinite(precio)) return { ok:false, msg:`Producto ${i+1}: precio no válido.` };
+    if (!Number.isFinite(cant) || cant <= 0) return { ok:false, msg:`Producto ${i+1}: cantidad no válida.` };
+    totalesParciales.push(precio * cant);
+  }
+  const subtotal = totalesParciales.reduce((s, v) => s + v, 0);
+  const iva = +(subtotal * IVA).toFixed(2);
+  const total = +(subtotal + iva).toFixed(2);
+  return { ok:true, subtotal: +subtotal.toFixed(2), iva, total, totalesParciales };
+}
+
+// Ejemplo:
+// const carrito = [{precio:1000, cantidad:2}, {precio:250.5, cantidad:1}];
+// console.log(calcularVenta(carrito));
+
+// --------------------
+// 5) Gestión de inventario (productos con código, nombre, precio, stock, estado)
+// Estructura: { codigo, nombre, precio, stock, estado }
+
+// Lista de productos (vacía para empezar)
+const productos = [];
+
+// Agregar nuevo producto (verifica código único y valores positivos)
+function agregarProducto(obj, coleccion) {
+  const lista = coleccion || productos;
+  if (!obj || !obj.codigo || !obj.nombre) return { ok:false, msg: 'codigo y nombre obligatorios' };
+  if (lista.some(p => String(p.codigo) === String(obj.codigo))) return { ok:false, msg: 'Codigo ya existe' };
+  const precio = Number(obj.precio) || 0;
+  const stock = Number(obj.stock) || 0;
+  if (precio < 0 || stock < 0) return { ok:false, msg: 'Valores numericos deben ser positivos' };
+  const estado = (stock > 0) ? 'Disponible' : 'Agotado';
+  lista.push({ codigo: String(obj.codigo), nombre: String(obj.nombre), precio, stock, estado });
+  return { ok:true };
+}
+
+// Actualizar stock por código
+function actualizarStock(codigo, nuevoStock, coleccion) {
+  const lista = coleccion || productos;
+  const idx = lista.findIndex(p => String(p.codigo) === String(codigo));
+  if (idx === -1) return { ok:false, msg:'Producto no encontrado' };
+  const s = Number(nuevoStock);
+  if (!Number.isFinite(s) || s < 0) return { ok:false, msg:'Stock debe ser número no negativo' };
+  lista[idx].stock = s;
+  lista[idx].estado = s > 0 ? 'Disponible' : 'Agotado';
+  return { ok:true, producto: lista[idx] };
+}
+
+// Listar productos ordenados alfabéticamente por nombre
+function listarProductosOrdenados(coleccion) {
+  const lista = (coleccion || productos).slice();
+  lista.sort((a,b) => {
+    const na = normalizarTexto(a.nombre);
+    const nb = normalizarTexto(b.nombre);
+    if (na < nb) return -1;
+    if (na > nb) return 1;
+    return 0;
+  });
+  return lista;
+}
+
+// Ejemplo:
+// agregarProducto({codigo:'P001', nombre:'Arroz', precio:3000, stock:10});
+// agregarProducto({codigo:'P002', nombre:'Azúcar', precio:2500, stock:0});
+// console.log(listarProductosOrdenados());
+// console.log(actualizarStock('P002', 5));
+// console.log(listarProductosOrdenados());
+
+// --------------------
+// FIN DEL PROGRAMA
