@@ -1,206 +1,281 @@
-// --------------------
-// UTILS (pequeñas ayudas)
-function esNumeroPositivo(n) {
-  return typeof n === 'number' && !isNaN(n) && n > 0;
-}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Segundo Parcial - Electiva</title>
+</head>
+<body>
+  <h2>Segundo Parcial - Electiva Tecnológica</h2>
+  <p>Docente: Carlos Castro</p>
+  <p>Estudiante: (tu nombre aquí)</p>
+  <p>Abre la consola del navegador (F12 → Consola) para ver los resultados.</p>
 
-function normalizarTexto(t) {
-  return String(t || '').toLowerCase().trim();
-}
+  <script>
+    /* ---------------------------------------------
+       SEGUNDO PARCIAL - ELECTIVA TECNOLÓGICA
+       Docente: Carlos Castro
+       Estudiante: (Tu nombre)
+       ---------------------------------------------
+       Contiene las soluciones a los 5 puntos:
+       1. Buscar estudiantes
+       2. Gestión de libros
+       3. Gestión de estudiantes
+       4. Registro de venta
+       5. Inventario de productos
+    --------------------------------------------- */
 
-// --------------------
-// 1) Buscar objetos en un array (estudiantes)
-// Ejemplo de array (puedes reemplazar por el provisto en la imagen)
-const estudiantes = [
-  { cedula: '10101010', nombres: 'Juan', apellidos: 'Pérez', edad: 20 },
-  { cedula: '20202020', nombres: 'María', apellidos: 'Gómez', edad: 19 },
-  { cedula: '30303030', nombres: 'Carlos', apellidos: 'López', edad: 21 }
-];
+    // ----------------------------------------------------------
+    // 1️⃣ Buscar objetos en un array (estudiantes)
+    // ----------------------------------------------------------
+    const estudiantes = [
+      { cedula: "1001", nombre: "Ana", apellido: "Pérez", edad: 20 },
+      { cedula: "1002", nombre: "Carlos", apellido: "Gómez", edad: 22 },
+      { cedula: "1003", nombre: "Laura", apellido: "Rodríguez", edad: 19 }
+    ];
 
-// Función que recibe cédula y devuelve el objeto o mensaje
-function buscarEstudiantePorCedula(cedula, arreglo) {
-  if (!cedula) return 'Debe proporcionar una cédula.';
-  const encontrado = arreglo.find(e => String(e.cedula) === String(cedula));
-  if (!encontrado) return `No se encontró estudiante con cédula ${cedula}.`;
-  return encontrado;
-}
-
-// Ejemplo de uso:
-// console.log(buscarEstudiantePorCedula('20202020', estudiantes));
-
-// --------------------
-// 2) Programa para agregar información sobre libros
-const biblioteca = [];
-
-// Añadir libro
-function agregarLibro(titulo, autor, anio, isbn, coleccion) {
-  const libros = coleccion || biblioteca;
-  if (!titulo || !autor) return { ok:false, msg: 'Título y autor son obligatorios.' };
-  const a = Number(anio) || null;
-  const l = { titulo: String(titulo), autor: String(autor), anio: a, isbn: String(isbn || '') };
-  libros.push(l);
-  return { ok:true, libro: l };
-}
-
-// Listar todos los libros
-function listarLibros(coleccion) {
-  const libros = coleccion || biblioteca;
-  if (libros.length === 0) return 'No hay libros registrados.';
-  return libros.map((b, i) => `${i+1}. "${b.titulo}" - ${b.autor} (${b.anio || 's/f'})`).join('\n');
-}
-
-// Buscar por título o autor (parcial, case-insensitive)
-function buscarLibro(term, coleccion) {
-  const libros = coleccion || biblioteca;
-  const t = normalizarTexto(term);
-  const encontrados = libros.filter(l => normalizarTexto(l.titulo).includes(t) || normalizarTexto(l.autor).includes(t));
-  if (encontrados.length === 0) return `No se encontraron libros para "${term}".`;
-  return encontrados;
-}
-
-// Ejemplo rápido:
-// agregarLibro('Cien años de soledad', 'Gabriel García Márquez', 1967, 'ISBN001');
-// agregarLibro('Introducción a JS', 'Ana Torres', 2020, 'JS2020');
-// console.log(listarLibros());
-// console.log(buscarLibro('gabriel'));
-
-// --------------------
-// 3) Gestión de estudiantes (agregar, listar por apellidos, buscar, actualizar, eliminar)
-let listaEstudiantes = [...estudiantes]; // empezamos con el ejemplo anterior
-
-// Agregar nuevo estudiante (valida cédula única)
-function agregarEstudiante(obj, coleccion) {
-  const arr = coleccion || listaEstudiantes;
-  if (!obj || !obj.cedula || !obj.nombres || !obj.apellidos) return { ok:false, msg: 'cedula, nombres y apellidos obligatorios' };
-  if (arr.some(e => String(e.cedula) === String(obj.cedula))) return { ok:false, msg: 'La cédula ya existe.' };
-  arr.push({ cedula: String(obj.cedula), nombres: obj.nombres, apellidos: obj.apellidos, ...obj });
-  return { ok:true };
-}
-
-// Listar estudiantes ordenados por apellidos
-function listarEstudiantesOrdenados(coleccion) {
-  const arr = (coleccion || listaEstudiantes).slice();
-  arr.sort((a,b) => {
-    const apA = normalizarTexto(a.apellidos);
-    const apB = normalizarTexto(b.apellidos);
-    if (apA < apB) return -1;
-    if (apA > apB) return 1;
-    return 0;
-  });
-  return arr;
-}
-
-// Buscar por número de identificación (cédula)
-function buscarEstudiante(cedula, coleccion) {
-  return buscarEstudiantePorCedula(cedula, coleccion || listaEstudiantes);
-}
-
-// Actualizar datos del estudiante (busca por cédula)
-function actualizarEstudiante(cedula, nuevosDatos, coleccion) {
-  const arr = coleccion || listaEstudiantes;
-  const idx = arr.findIndex(e => String(e.cedula) === String(cedula));
-  if (idx === -1) return { ok:false, msg: 'Estudiante no encontrado.' };
-  arr[idx] = { ...arr[idx], ...nuevosDatos, cedula: String(arr[idx].cedula) }; // no cambiar cédula
-  return { ok:true, estudiante: arr[idx] };
-}
-
-// Eliminar estudiante por cédula
-function eliminarEstudiante(cedula, coleccion) {
-  const arr = coleccion || listaEstudiantes;
-  const idx = arr.findIndex(e => String(e.cedula) === String(cedula));
-  if (idx === -1) return { ok:false, msg: 'No existe el estudiante.' };
-  const eliminado = arr.splice(idx,1)[0];
-  return { ok:true, eliminado };
-}
-
-// Ejemplo:
-// agregarEstudiante({cedula:'40404040', nombres:'Ana', apellidos:'Suarez'});
-// console.log(listarEstudiantesOrdenados());
-// console.log(actualizarEstudiante('40404040',{edad:22}));
-// console.log(eliminarEstudiante('40404040'));
-
-// --------------------
-// 4) Registrar venta de varios productos (cálculo subtotal, IVA y total)
-// Se usa constante IVA = 0.19
-const IVA = 0.19;
-
-// Función que recibe un array de items {precio, cantidad} y devuelve calculos y errores
-function calcularVenta(items) {
-  if (!Array.isArray(items) || items.length === 0) return { ok:false, msg:'No hay productos.' };
-  let totalesParciales = [];
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    // Validaciones
-    if (typeof it.precio === 'undefined' || typeof it.cantidad === 'undefined') {
-      return { ok:false, msg:`Producto ${i+1}: falta precio o cantidad.` };
+    function buscarEstudiante() {
+      let cedula = prompt("Ingrese la cédula del estudiante:");
+      const encontrado = estudiantes.find(e => e.cedula === cedula);
+      if (encontrado) {
+        alert(`Estudiante encontrado:\n${encontrado.nombre} ${encontrado.apellido}, edad ${encontrado.edad}`);
+      } else {
+        alert("No se encontró estudiante con esa cédula.");
+      }
     }
-    const precio = Number(it.precio);
-    const cant = Number(it.cantidad);
-    if (!esNumeroPositivo(precio) || !Number.isFinite(precio)) return { ok:false, msg:`Producto ${i+1}: precio no válido.` };
-    if (!Number.isFinite(cant) || cant <= 0) return { ok:false, msg:`Producto ${i+1}: cantidad no válida.` };
-    totalesParciales.push(precio * cant);
-  }
-  const subtotal = totalesParciales.reduce((s, v) => s + v, 0);
-  const iva = +(subtotal * IVA).toFixed(2);
-  const total = +(subtotal + iva).toFixed(2);
-  return { ok:true, subtotal: +subtotal.toFixed(2), iva, total, totalesParciales };
-}
 
-// Ejemplo:
-// const carrito = [{precio:1000, cantidad:2}, {precio:250.5, cantidad:1}];
-// console.log(calcularVenta(carrito));
+    // ----------------------------------------------------------
+    // 2️⃣ Programa para agregar y buscar libros
+    // ----------------------------------------------------------
+    let libros = [];
 
-// --------------------
-// 5) Gestión de inventario (productos con código, nombre, precio, stock, estado)
-// Estructura: { codigo, nombre, precio, stock, estado }
+    function agregarLibro() {
+      let titulo = prompt("Título del libro:");
+      let autor = prompt("Autor del libro:");
+      let anio = prompt("Año de publicación:");
+      let isbn = prompt("Código ISBN:");
+      let nuevo = { titulo, autor, anio, isbn };
+      libros.push(nuevo);
+      alert("Libro agregado correctamente.");
+    }
 
-// Lista de productos (vacía para empezar)
-const productos = [];
+    function listarLibros() {
+      if (libros.length === 0) {
+        alert("No hay libros registrados.");
+      } else {
+        let lista = "Lista de libros:\n";
+        libros.forEach((l, i) => {
+          lista += `${i + 1}. ${l.titulo} - ${l.autor} (${l.anio})\n`;
+        });
+        alert(lista);
+      }
+    }
 
-// Agregar nuevo producto (verifica código único y valores positivos)
-function agregarProducto(obj, coleccion) {
-  const lista = coleccion || productos;
-  if (!obj || !obj.codigo || !obj.nombre) return { ok:false, msg: 'codigo y nombre obligatorios' };
-  if (lista.some(p => String(p.codigo) === String(obj.codigo))) return { ok:false, msg: 'Codigo ya existe' };
-  const precio = Number(obj.precio) || 0;
-  const stock = Number(obj.stock) || 0;
-  if (precio < 0 || stock < 0) return { ok:false, msg: 'Valores numericos deben ser positivos' };
-  const estado = (stock > 0) ? 'Disponible' : 'Agotado';
-  lista.push({ codigo: String(obj.codigo), nombre: String(obj.nombre), precio, stock, estado });
-  return { ok:true };
-}
+    function buscarLibro() {
+      let palabra = prompt("Buscar libro por título o autor:");
+      const resultado = libros.filter(
+        l => l.titulo.toLowerCase().includes(palabra.toLowerCase()) ||
+             l.autor.toLowerCase().includes(palabra.toLowerCase())
+      );
+      if (resultado.length > 0) {
+        let texto = "Libros encontrados:\n";
+        resultado.forEach(l => {
+          texto += `${l.titulo} - ${l.autor}\n`;
+        });
+        alert(texto);
+      } else {
+        alert("No se encontraron libros.");
+      }
+    }
 
-// Actualizar stock por código
-function actualizarStock(codigo, nuevoStock, coleccion) {
-  const lista = coleccion || productos;
-  const idx = lista.findIndex(p => String(p.codigo) === String(codigo));
-  if (idx === -1) return { ok:false, msg:'Producto no encontrado' };
-  const s = Number(nuevoStock);
-  if (!Number.isFinite(s) || s < 0) return { ok:false, msg:'Stock debe ser número no negativo' };
-  lista[idx].stock = s;
-  lista[idx].estado = s > 0 ? 'Disponible' : 'Agotado';
-  return { ok:true, producto: lista[idx] };
-}
+    // ----------------------------------------------------------
+    // 3️⃣ Programa para gestionar estudiantes
+    // ----------------------------------------------------------
+    let listaEstudiantes = [...estudiantes];
 
-// Listar productos ordenados alfabéticamente por nombre
-function listarProductosOrdenados(coleccion) {
-  const lista = (coleccion || productos).slice();
-  lista.sort((a,b) => {
-    const na = normalizarTexto(a.nombre);
-    const nb = normalizarTexto(b.nombre);
-    if (na < nb) return -1;
-    if (na > nb) return 1;
-    return 0;
-  });
-  return lista;
-}
+    function agregarEstudiante() {
+      let cedula = prompt("Cédula del estudiante:");
+      if (listaEstudiantes.some(e => e.cedula === cedula)) {
+        alert("Ya existe un estudiante con esa cédula.");
+        return;
+      }
+      let nombre = prompt("Nombre:");
+      let apellido = prompt("Apellido:");
+      let edad = Number(prompt("Edad:"));
+      listaEstudiantes.push({ cedula, nombre, apellido, edad });
+      alert("Estudiante agregado correctamente.");
+    }
 
-// Ejemplo:
-// agregarProducto({codigo:'P001', nombre:'Arroz', precio:3000, stock:10});
-// agregarProducto({codigo:'P002', nombre:'Azúcar', precio:2500, stock:0});
-// console.log(listarProductosOrdenados());
-// console.log(actualizarStock('P002', 5));
-// console.log(listarProductosOrdenados());
+    function listarEstudiantes() {
+      let ordenados = [...listaEstudiantes].sort((a, b) =>
+        a.apellido.localeCompare(b.apellido)
+      );
+      let texto = "Estudiantes ordenados por apellido:\n";
+      ordenados.forEach(e => {
+        texto += `${e.apellido}, ${e.nombre} - ${e.cedula}\n`;
+      });
+      alert(texto);
+    }
 
-// --------------------
-// FIN DEL PROGRAMA
+    function buscarPorCedula() {
+      let cedula = prompt("Ingrese la cédula del estudiante:");
+      const e = listaEstudiantes.find(e => e.cedula === cedula);
+      if (e) {
+        alert(`Nombre: ${e.nombre} ${e.apellido}\nEdad: ${e.edad}`);
+      } else {
+        alert("No se encontró el estudiante.");
+      }
+    }
+
+    function actualizarEstudiante() {
+      let cedula = prompt("Cédula del estudiante a actualizar:");
+      const e = listaEstudiantes.find(e => e.cedula === cedula);
+      if (!e) {
+        alert("No existe ese estudiante.");
+        return;
+      }
+      e.nombre = prompt("Nuevo nombre:", e.nombre);
+      e.apellido = prompt("Nuevo apellido:", e.apellido);
+      e.edad = Number(prompt("Nueva edad:", e.edad));
+      alert("Datos actualizados correctamente.");
+    }
+
+    function eliminarEstudiante() {
+      let cedula = prompt("Cédula del estudiante a eliminar:");
+      const indice = listaEstudiantes.findIndex(e => e.cedula === cedula);
+      if (indice >= 0) {
+        listaEstudiantes.splice(indice, 1);
+        alert("Estudiante eliminado.");
+      } else {
+        alert("No existe el estudiante.");
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 4️⃣ Registro de venta de productos
+    // ----------------------------------------------------------
+    const IVA = 0.19;
+
+    function registrarVenta() {
+      let continuar = true;
+      let subtotal = 0;
+
+      while (continuar) {
+        let precio = Number(prompt("Ingrese el precio del producto:"));
+        let cantidad = Number(prompt("Ingrese la cantidad:"));
+        if (isNaN(precio) || isNaN(cantidad) || precio <= 0 || cantidad <= 0) {
+          alert("Datos inválidos, ingrese valores positivos.");
+        } else {
+          subtotal += precio * cantidad;
+        }
+        continuar = confirm("¿Desea agregar otro producto?");
+      }
+
+      let valorIVA = subtotal * IVA;
+      let total = subtotal + valorIVA;
+      alert(
+        `Subtotal: $${subtotal.toFixed(2)}\n` +
+        `IVA (19%): $${valorIVA.toFixed(2)}\n` +
+        `Total a pagar: $${total.toFixed(2)}`
+      );
+    }
+
+    // ----------------------------------------------------------
+    // 5️⃣ Inventario de productos
+    // ----------------------------------------------------------
+    let productos = [];
+
+    function agregarProducto() {
+      let codigo = prompt("Código del producto:");
+      if (productos.some(p => p.codigo === codigo)) {
+        alert("Ya existe un producto con ese código.");
+        return;
+      }
+      let nombre = prompt("Nombre del producto:");
+      let precio = Number(prompt("Precio:"));
+      let stock = Number(prompt("Cantidad en stock:"));
+      if (precio < 0 || stock < 0) {
+        alert("Los valores deben ser positivos.");
+        return;
+      }
+      let estado = stock > 0 ? "Disponible" : "Agotado";
+      productos.push({ codigo, nombre, precio, stock, estado });
+      alert("Producto agregado correctamente.");
+    }
+
+    function actualizarStock() {
+      let codigo = prompt("Código del producto a actualizar:");
+      const producto = productos.find(p => p.codigo === codigo);
+      if (!producto) {
+        alert("No se encontró el producto.");
+        return;
+      }
+      let nuevoStock = Number(prompt("Nuevo stock:"));
+      if (nuevoStock < 0) {
+        alert("El stock no puede ser negativo.");
+        return;
+      }
+      producto.stock = nuevoStock;
+      producto.estado = nuevoStock > 0 ? "Disponible" : "Agotado";
+      alert("Stock actualizado correctamente.");
+    }
+
+    function listarProductos() {
+      let ordenados = [...productos].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre)
+      );
+      let texto = "Lista de productos:\n";
+      ordenados.forEach(p => {
+        texto += `${p.codigo} - ${p.nombre} ($${p.precio}) - ${p.estado}\n`;
+      });
+      alert(texto);
+    }
+
+    // ----------------------------------------------------------
+    // Menú principal
+    // ----------------------------------------------------------
+    function menu() {
+      let opcion;
+      do {
+        opcion = prompt(
+          "SEGUNDO PARCIAL ELECTIVA\n\n" +
+          "1. Buscar estudiante en array\n" +
+          "2. Agregar libro\n" +
+          "3. Listar libros\n" +
+          "4. Buscar libro\n" +
+          "5. Agregar estudiante\n" +
+          "6. Listar estudiantes\n" +
+          "7. Buscar estudiante\n" +
+          "8. Actualizar estudiante\n" +
+          "9. Eliminar estudiante\n" +
+          "10. Registrar venta\n" +
+          "11. Agregar producto\n" +
+          "12. Actualizar stock\n" +
+          "13. Listar productos\n" +
+          "0. Salir"
+        );
+
+        switch (opcion) {
+          case "1": buscarEstudiante(); break;
+          case "2": agregarLibro(); break;
+          case "3": listarLibros(); break;
+          case "4": buscarLibro(); break;
+          case "5": agregarEstudiante(); break;
+          case "6": listarEstudiantes(); break;
+          case "7": buscarPorCedula(); break;
+          case "8": actualizarEstudiante(); break;
+          case "9": eliminarEstudiante(); break;
+          case "10": registrarVenta(); break;
+          case "11": agregarProducto(); break;
+          case "12": actualizarStock(); break;
+          case "13": listarProductos(); break;
+        }
+      } while (opcion !== "0");
+
+      alert("Programa finalizado.");
+    }
+
+    // Ejecutar menú
+    menu();
+  </script>
+</body>
+</html>
